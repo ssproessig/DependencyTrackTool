@@ -35,6 +35,8 @@ class CleanGitFlowShortLivingBranches(BaseAction):
 # inspired by code by David Nascimento
 class CreateVulnerabilityReport(BaseAction):
     class XlsxWriter:
+        COLUMN_WIDTH_SCALING = 4
+
         def __init__(self, _report):
             import xlsxwriter
 
@@ -58,8 +60,15 @@ class CreateVulnerabilityReport(BaseAction):
                 sheet.write(0, idx, header, self._heading)
 
             for row_idx, row in enumerate(_rows, start=1):
+                column_value_max_length = {}
+
                 for col_idx, field in enumerate(_headers.keys()):
-                    sheet.write(row_idx, col_idx, getattr(row, field, "n/a"))
+                    value = getattr(row, field, "n/a")
+                    sheet.write(row_idx, col_idx, value)
+                    column_value_max_length[col_idx] = max(column_value_max_length.get(col_idx, 0), len(str(value)))
+
+                for col_idx in range(0, len(column_value_max_length)):
+                    sheet.set_column(col_idx, col_idx, column_value_max_length[col_idx] * self.COLUMN_WIDTH_SCALING)
 
                 if _row_callback:
                     _row_callback(row)
