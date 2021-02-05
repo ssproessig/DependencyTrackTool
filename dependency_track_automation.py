@@ -152,7 +152,7 @@ class Project(dict):
         super(Project, self).__init__(*args, **kwargs)
         self.__dict__ = self
 
-    def __str__(self):
+    def __repr__(self):
         return f"{self.name}:{self.version}"
 
 
