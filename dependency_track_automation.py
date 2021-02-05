@@ -1,3 +1,4 @@
+import argparse
 import itertools
 import logging
 from typing import List
@@ -17,6 +18,9 @@ class BaseAction:
 
 class CleanGitFlowShortLivingBranches(BaseAction):
     LONG_LIVING_BRANCHES = ["master", "develop"]
+
+    def __init__(self, _arguments):
+        pass  # nothing to configure yet
 
     def execute(self, dependency_track):
         for project in dt.get_projects():
@@ -118,9 +122,18 @@ class CreateVulnerabilityReport(BaseAction):
         def __repr__(self):
             return f"{self.name}:{self.version} with {self.vulnerabilities} vulnerabilities"
 
-    def __init__(self):
-        self._release_tag = "ARO_2_0_0"
-        self._writer = "xlsx"
+    def __init__(self, _arguments):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--tag", help="the tag to filter projects for reporting")
+        parser.add_argument("--writer", default='xlsx',
+                            help=f"the writer to use for reporting: {self.SUPPORTED_WRITERS.keys()}")
+        args = parser.parse_args(_arguments)
+
+        if args.writer not in self.SUPPORTED_WRITERS:
+            raise KeyError(f"not a supported writer: {args.writer}")
+
+        self._release_tag = args.tag
+        self._writer = args.writer
 
     def execute(self, dependency_track):
         report = self.Report(self._release_tag)
@@ -217,17 +230,16 @@ class DependencyTrack:
 
 
 if __name__ == "__main__":
-    import argparse
+    app_parser = argparse.ArgumentParser(description="DependencyTrack tools")
+    app_parser.add_argument('--url', required=True, help="Dependency Track URL to use")
+    app_parser.add_argument('--api-key', required=True, help="Dependency Track API key to use")
+    app_parser.add_argument('action', help=f"Action to execute: {' '.join(_ACTIONS.keys())}")
+    app_parser.add_argument('remaining_arguments', nargs=argparse.REMAINDER)
 
-    parser = argparse.ArgumentParser(description="DependencyTrack tools")
-    parser.add_argument('--url', required=True, help="Dependency Track URL to use")
-    parser.add_argument('--api-key', required=True, help="Dependency Track API key to use")
-    parser.add_argument('action', help=f"Action to execute: {' '.join(_ACTIONS.keys())}")
-
-    arguments = parser.parse_args()
+    arguments = app_parser.parse_args()
 
     try:
-        action = _ACTIONS[arguments.action]()
+        action = _ACTIONS[arguments.action](arguments.remaining_arguments)
 
         # noinspection PyBroadException
         try:
