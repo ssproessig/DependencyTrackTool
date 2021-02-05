@@ -93,10 +93,11 @@ class CreateVulnerabilityReport(BaseAction):
 
         def _write_project_sheet(self, _xlsx, _project):
             self._write_sheet(_xlsx, f"{_project.name} {_project.version}"[:31], {
+                'name': 'Name',
+                'version': 'Version',
+                'license': 'Under License',
                 'purl': 'PURL',
-                'classifier': 'Classifier',
-                'sha256': 'Checksum',
-                'license': 'Under License'
+                'sha256': 'Checksum'
             }, _project.dependencies)
 
     SUPPORTED_WRITERS = {
