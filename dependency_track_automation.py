@@ -1,6 +1,7 @@
 import argparse
 import itertools
 import logging
+import re
 from typing import List
 
 import requests
@@ -17,19 +18,37 @@ class BaseAction:
 
 
 class CleanGitFlowShortLivingBranches(BaseAction):
-    LONG_LIVING_BRANCHES = ["master", "develop"]
+    LONG_LIVING_BRANCHES = [
+        # git-flow
+        "^master$",
+        "develop",
+        # maven release artifacts
+        "\\d+\\.\\d+\\.\\d+"
+    ]
+    SHORT_LIVING_BRANCHES = [
+        # git-flow
+        "^PR-\\d+$",
+        # maven snapshot artifacts
+        "\\d+\\.\\d+\\.\\d+-SNAPSHOT$"
+    ]
 
     def __init__(self, _arguments):
-        pass  # nothing to configure yet
+        self.LONG_LIVING_BRANCHES = [re.compile(slb) for slb in self.LONG_LIVING_BRANCHES]
+        self.SHORT_LIVING_BRANCHES = [re.compile(slb) for slb in self.SHORT_LIVING_BRANCHES]
 
     def execute(self, dependency_track):
         for project in dt.get_projects():
-            if project.version in self.LONG_LIVING_BRANCHES:
-                logging.info(f"Skipping long-living branch {project}")
+            if any([slb.fullmatch(project.version) for slb in self.LONG_LIVING_BRANCHES]):
+                logging.info(f"Skipping '{project}' as it is on a long-living branch ")
                 continue
 
-            if not dependency_track.delete_project(project):
-                logging.warning(f"Unable to delete {project}")
+            if any([slb.fullmatch(project.version) for slb in self.SHORT_LIVING_BRANCHES]):
+                if not dependency_track.delete_project(project):
+                    logging.warning(f"Unable to delete {project}")
+                continue
+
+            logging.info(f"Skipping '{project}' as it is neither a LONG- nor SHORT-living branch version - "
+                         f"and I don't know what to do")
 
 
 # inspired by code by David Nascimento
