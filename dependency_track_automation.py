@@ -36,8 +36,18 @@ class CleanGitFlowShortLivingBranches(BaseAction):
         self.LONG_LIVING_BRANCHES = [re.compile(slb) for slb in self.LONG_LIVING_BRANCHES]
         self.SHORT_LIVING_BRANCHES = [re.compile(slb) for slb in self.SHORT_LIVING_BRANCHES]
 
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--filter-project-name", help="project name must match (default: any name)", default=".*")
+        args = parser.parse_args(_arguments)
+
+        self._matching_project_name = re.compile(args.filter_project_name)
+
     def execute(self, dependency_track):
         for project in dt.get_projects():
+            if not self._matching_project_name.fullmatch(project.name):
+                logging.info(f"Skipping '{project}' as it does not match project name filter")
+                continue
+
             if any([slb.fullmatch(project.version) for slb in self.LONG_LIVING_BRANCHES]):
                 logging.info(f"Skipping '{project}' as it is on a long-living branch ")
                 continue

@@ -25,6 +25,18 @@ does not match a _long-living branch_ according to git-flow will be deleted.
 Merely a cleanup action for our git-flow based Jenkins CI/CD, to be executed once a sprint is
 finished.
 
+```
+> dependency_track-automation.py --url http://10.220.163.57:8080 --api-key YOUR_SECRET_API_KEY  clean-gitflow-short-living-branch-versions  --filter-project-name  aramis.*
+...
+2021-06-03 13:07:44,146 - root - INFO - Using DependencyTrack from http://10.220.163.57:8080/api/v1
+2021-06-03 13:07:44,147 - root - INFO - Getting list of projects
+2021-06-03 13:07:44,370 - root - INFO - Skipping 'aramis-o.api-server:develop' as it is on a long-living branch 
+2021-06-03 13:07:44,370 - root - INFO - Deleting 'aramis-o.api-server:PR-117' 
+2021-06-03 13:07:44,371 - root - INFO - Skipping 'asrs:1.2.1-SNAPSHOT' as it does not match project name filter
+...
+```
+
+
 ### create-vulnerability-report
 This action will iterator the Dependency Track server for all projects that carry a given tag. For those projects found
 it will collect the components used and their license and vulnerability status.
