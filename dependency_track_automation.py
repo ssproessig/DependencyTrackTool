@@ -230,9 +230,25 @@ class DependencyTrack:
 
         logging.info(f"Using DependencyTrack from {self._url}")
 
+    def _get_paged(self, url) -> List[dict]:
+        objects = []
+
+        for page in itertools.count(1):
+            objects_on_page = requests.get(
+                url, headers=self._shared_header,
+                params={"pageSize": self.PAGE_SIZE, "pageNumber": page}
+            ).json()
+
+            if objects_on_page:
+                objects += objects_on_page
+            else:
+                break
+
+        return objects
+
     def get_projects(self) -> List[Project]:
         logging.info(f"Getting list of projects")
-        return [Project(p) for p in requests.get(f"{self._url}/project", headers=self._shared_header).json()]
+        return [Project(p) for p in self._get_paged(f"{self._url}/project")]
 
     def delete_project(self, _project) -> bool:
         logging.info(f"Deleting project {_project}")
@@ -247,22 +263,7 @@ class DependencyTrack:
 
     def get_project_dependencies(self, _project) -> List[Component]:
         logging.info(f"Getting list of project dependencies for {_project}")
-
-        all_dependencies = []
-
-        for page in itertools.count(1):
-            dependencies = requests.get(
-                f"{self._url}/dependency/project/{_project.uuid}",
-                headers=self._shared_header,
-                params={"pageSize": self.PAGE_SIZE, "pageNumber": page}
-            ).json()
-
-            if dependencies:
-                all_dependencies += dependencies
-            else:
-                break
-
-        return [Component(d['component']) for d in all_dependencies]
+        return [Component(d['component']) for d in self._get_paged(f"{self._url}/dependency/project/{_project.uuid}")]
 
 
 ########################################################################################################################
