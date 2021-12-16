@@ -44,6 +44,10 @@ class CleanGitFlowShortLivingBranches(BaseAction):
 
     def execute(self, dependency_track):
         for project in dt.get_projects():
+            if project.version is None:
+                logging.info(f"Skipping '{project.name}' [{project.uuid}] as it does not carry a version")
+                continue
+
             if not self._matching_project_name.fullmatch(project.name):
                 logging.info(f"Skipping '{project}' as it does not match project name filter")
                 continue
@@ -201,6 +205,8 @@ _ACTIONS = {
 
 class Project(dict):
     def __init__(self, *args, **kwargs):
+        args[0].setdefault('version', None)
+        args[0].setdefault('uuid', None)
         super(Project, self).__init__(*args, **kwargs)
         self.__dict__ = self
 
