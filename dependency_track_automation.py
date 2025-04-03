@@ -223,6 +223,13 @@ class Component(dict):
         return f"{self.purl}"
 
 
+class InvalidResponse(Exception):
+    def __init__(self, response):
+        self._response = response
+
+    def __str__(self):
+        return f"{self._response.status_code} for {self._response.url}: {self._response.text}"
+
 class DependencyTrack:
     PAGE_SIZE = 100
 
@@ -240,10 +247,15 @@ class DependencyTrack:
         objects = []
 
         for page in itertools.count(1):
-            objects_on_page = requests.get(
+            response = requests.get(
                 url, headers=self._shared_header,
                 params={"pageSize": self.PAGE_SIZE, "pageNumber": page}
-            ).json()
+            )
+
+            if response.status_code > 299:
+                raise InvalidResponse(response)
+
+            objects_on_page = response.json()
 
             if objects_on_page:
                 objects += objects_on_page
