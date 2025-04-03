@@ -7,6 +7,7 @@ from datetime import UTC
 import requests
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 
 TIMEOUT = 30.0
@@ -17,7 +18,7 @@ TIMEOUT = 30.0
 
 class BaseAction:
     def execute(self, dependency_track):
-        logging.warning("not implemented")
+        logger.warning("not implemented")
 
 
 class CleanGitFlowShortLivingBranches(BaseAction):
@@ -48,23 +49,23 @@ class CleanGitFlowShortLivingBranches(BaseAction):
     def execute(self, dependency_track):
         for project in dt.get_projects():
             if project.version is None:
-                logging.info(f"Skipping '{project.name}' [{project.uuid}] as it does not carry a version")
+                logger.info(f"Skipping '{project.name}' [{project.uuid}] as it does not carry a version")
                 continue
 
             if not self._matching_project_name.fullmatch(project.name):
-                logging.info(f"Skipping '{project}' as it does not match project name filter")
+                logger.info(f"Skipping '{project}' as it does not match project name filter")
                 continue
 
             if any(slb.fullmatch(project.version) for slb in self.LONG_LIVING_BRANCHES):
-                logging.info(f"Skipping '{project}' as it is on a long-living branch ")
+                logger.info(f"Skipping '{project}' as it is on a long-living branch ")
                 continue
 
             if any(slb.fullmatch(project.version) for slb in self.SHORT_LIVING_BRANCHES):
                 if not dependency_track.delete_project(project):
-                    logging.warning(f"Unable to delete {project}")
+                    logger.warning(f"Unable to delete {project}")
                 continue
 
-            logging.info(f"Skipping '{project}' as it is neither a LONG- nor SHORT-living branch version - "
+            logger.info(f"Skipping '{project}' as it is neither a LONG- nor SHORT-living branch version - "
                          f"and I don't know what to do")
 
 
@@ -78,7 +79,7 @@ class CreateVulnerabilityReport(BaseAction):
 
             filename = \
                 f"Vulnerability-Report_{_report.release_tag}-{_report.created_at.strftime('%d%m%Y_%H%M%S')}.xlsx"
-            logging.info(f"writing to {filename}...")
+            logger.info(f"writing to {filename}...")
 
             xlsx = xlsxwriter.Workbook(filename)
             xlsx.formats[0].set_font_name("Consolas")
@@ -87,7 +88,7 @@ class CreateVulnerabilityReport(BaseAction):
             self._write_summary(xlsx, _report)
             xlsx.close()
 
-            logging.info("...ready.")
+            logger.info("...ready.")
 
         def _escape_name(self, in_name):
             out_name = in_name
@@ -192,10 +193,10 @@ class CreateVulnerabilityReport(BaseAction):
         report = self.Report(self._release_tag)
 
         tagged_projects = dt.get_projects_with_tag(self._release_tag)
-        logging.info(f"{len(tagged_projects)} reported projects for {self._release_tag}")
+        logger.info(f"{len(tagged_projects)} reported projects for {self._release_tag}")
 
         for _project in tagged_projects:
-            logging.info(f"--> Collecting metrics for {_project}")
+            logger.info(f"--> Collecting metrics for {_project}")
             project_report = self.ReportedProject(_project)
             project_report.dependencies = dt.get_project_dependencies(_project)
 
@@ -251,7 +252,7 @@ class DependencyTrack:
             "X-Api-key": self._api_key
         }
 
-        logging.info(f"Using DependencyTrack from {self._url}")
+        logger.info(f"Using DependencyTrack from {self._url}")
 
     def _get_paged(self, url) -> list[dict]:
         objects = []
@@ -277,11 +278,11 @@ class DependencyTrack:
         return objects
 
     def get_projects(self) -> list[Project]:
-        logging.info("Getting list of projects")
+        logger.info("Getting list of projects")
         return [Project(p) for p in self._get_paged(f"{self._url}/project")]
 
     def delete_project(self, _project) -> bool:
-        logging.info(f"Deleting project {_project}")
+        logger.info(f"Deleting project {_project}")
         resp = requests.delete(
             f"{self._url}/project/{_project['uuid']}",
             headers=self._shared_header,
@@ -290,7 +291,7 @@ class DependencyTrack:
         return resp.ok
 
     def get_projects_with_tag(self, _release_tag) -> list[Project]:
-        logging.info(f"Getting list of projects with tag {_release_tag}")
+        logger.info(f"Getting list of projects with tag {_release_tag}")
 
         return [
             Project(p)
@@ -302,7 +303,7 @@ class DependencyTrack:
         ]
 
     def get_project_dependencies(self, _project) -> list[Component]:
-        logging.info(f"Getting list of project dependencies for {_project}")
+        logger.info(f"Getting list of project dependencies for {_project}")
         return [Component(d) for d in self._get_paged(f"{self._url}/component/project/{_project.uuid}")]
 
 
@@ -327,7 +328,7 @@ if __name__ == "__main__":
             action.execute(dt)
 
         except Exception as ex:
-            logging.fatal(f"executing {arguments.action} failed: {ex}")
+            logger.fatal(f"executing {arguments.action} failed: {ex}")
 
     except KeyError:
-        logging.fatal(f"unknown action {arguments.action}")
+        logger.fatal(f"unknown action {arguments.action}")
