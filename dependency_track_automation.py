@@ -182,7 +182,8 @@ class CreateVulnerabilityReport(BaseAction):
         args = parser.parse_args(_arguments)
 
         if args.writer not in self.SUPPORTED_WRITERS:
-            raise KeyError(f"not a supported writer: {args.writer}")
+            msg = f"not a supported writer: {args.writer}"
+            raise KeyError(msg)
 
         self._release_tag = args.tag
         self._writer = args.writer
