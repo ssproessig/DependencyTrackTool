@@ -2,7 +2,6 @@ import argparse
 import itertools
 import logging
 import re
-from typing import List
 
 import requests
 
@@ -213,7 +212,7 @@ class Project(dict):
     def __init__(self, *args, **kwargs):
         args[0].setdefault('version', None)
         args[0].setdefault('uuid', None)
-        super(Project, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.__dict__ = self
 
     def __repr__(self):
@@ -222,7 +221,7 @@ class Project(dict):
 
 class Component(dict):
     def __init__(self, *args, **kwargs):
-        super(Component, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.__dict__ = self
 
     def __repr__(self):
@@ -249,7 +248,7 @@ class DependencyTrack:
 
         logging.info(f"Using DependencyTrack from {self._url}")
 
-    def _get_paged(self, url) -> List[dict]:
+    def _get_paged(self, url) -> list[dict]:
         objects = []
 
         for page in itertools.count(1):
@@ -270,7 +269,7 @@ class DependencyTrack:
 
         return objects
 
-    def get_projects(self) -> List[Project]:
+    def get_projects(self) -> list[Project]:
         logging.info(f"Getting list of projects")
         return [Project(p) for p in self._get_paged(f"{self._url}/project")]
 
@@ -279,13 +278,13 @@ class DependencyTrack:
         resp = requests.delete(f"{self._url}/project/{_project['uuid']}", headers=self._shared_header)
         return resp.ok
 
-    def get_projects_with_tag(self, _release_tag) -> List[Project]:
+    def get_projects_with_tag(self, _release_tag) -> list[Project]:
         logging.info(f"Getting list of projects with tag {_release_tag}")
 
         return [Project(p) for p in
                 requests.get(f"{self._url}/project/tag/{_release_tag}", headers=self._shared_header).json()]
 
-    def get_project_dependencies(self, _project) -> List[Component]:
+    def get_project_dependencies(self, _project) -> list[Component]:
         logging.info(f"Getting list of project dependencies for {_project}")
         return [Component(d) for d in self._get_paged(f"{self._url}/component/project/{_project.uuid}")]
 
