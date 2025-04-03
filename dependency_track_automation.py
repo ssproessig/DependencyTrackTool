@@ -86,8 +86,14 @@ class CreateVulnerabilityReport(BaseAction):
 
             logging.info("...ready.")
 
+        def _escape_name(self, in_name):
+            out_name = in_name
+            for c in ["[","]",":","*","?","/","\\"]:
+                out_name = out_name.replace(c, "_")
+            return out_name
+
         def _write_sheet(self, _xlsx, _name, _headers, _rows, _row_callback=None):
-            sheet = _xlsx.add_worksheet(_name[:31])
+            sheet = _xlsx.add_worksheet(self._escape_name(_name[:31]))
 
             for idx, header in enumerate(_headers.values()):
                 sheet.write(0, idx, header, self._heading)
