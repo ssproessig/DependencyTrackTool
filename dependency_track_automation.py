@@ -229,7 +229,7 @@ class Component(dict):
         return f"{self.purl}"
 
 
-class InvalidResponse(Exception):
+class InvalidResponseError(Exception):
     def __init__(self, response):
         self._response = response
 
@@ -259,7 +259,7 @@ class DependencyTrack:
             )
 
             if response.status_code > 299:
-                raise InvalidResponse(response)
+                raise InvalidResponseError(response)
 
             objects_on_page = response.json()
 
