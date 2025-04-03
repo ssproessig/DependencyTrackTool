@@ -265,7 +265,7 @@ class DependencyTrack:
                 timeout=TIMEOUT,
             )
 
-            if response.status_code > 299:
+            if not response.ok:
                 raise InvalidResponseError(response)
 
             objects_on_page = response.json()
