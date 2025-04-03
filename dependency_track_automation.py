@@ -49,24 +49,24 @@ class CleanGitFlowShortLivingBranches(BaseAction):
     def execute(self, dependency_track):
         for project in dt.get_projects():
             if project.version is None:
-                logger.info(f"Skipping '{project.name}' [{project.uuid}] as it does not carry a version")
+                logger.info("Skipping '%s' [%s] as it does not carry a version", project.name, project.uuid)
                 continue
 
             if not self._matching_project_name.fullmatch(project.name):
-                logger.info(f"Skipping '{project}' as it does not match project name filter")
+                logger.info("Skipping '%s' as it does not match project name filter", project)
                 continue
 
             if any(slb.fullmatch(project.version) for slb in self.LONG_LIVING_BRANCHES):
-                logger.info(f"Skipping '{project}' as it is on a long-living branch ")
+                logger.info("Skipping '%s' as it is on a long-living branch ", project)
                 continue
 
             if any(slb.fullmatch(project.version) for slb in self.SHORT_LIVING_BRANCHES):
                 if not dependency_track.delete_project(project):
-                    logger.warning(f"Unable to delete {project}")
+                    logger.warning("Unable to delete %s", project)
                 continue
 
-            logger.info(f"Skipping '{project}' as it is neither a LONG- nor SHORT-living branch version - "
-                         f"and I don't know what to do")
+            logger.info("Skipping '%s' as it is neither a LONG- nor SHORT-living branch version - "
+                        "and I don't know what to do", project)
 
 
 # inspired by code by David Nascimento
@@ -79,7 +79,7 @@ class CreateVulnerabilityReport(BaseAction):
 
             filename = \
                 f"Vulnerability-Report_{_report.release_tag}-{_report.created_at.strftime('%d%m%Y_%H%M%S')}.xlsx"
-            logger.info(f"writing to {filename}...")
+            logger.info("writing to %s...", filename)
 
             xlsx = xlsxwriter.Workbook(filename)
             xlsx.formats[0].set_font_name("Consolas")
@@ -193,10 +193,10 @@ class CreateVulnerabilityReport(BaseAction):
         report = self.Report(self._release_tag)
 
         tagged_projects = dt.get_projects_with_tag(self._release_tag)
-        logger.info(f"{len(tagged_projects)} reported projects for {self._release_tag}")
+        logger.info("%d reported projects for %s", len(tagged_projects), self._release_tag)
 
         for _project in tagged_projects:
-            logger.info(f"--> Collecting metrics for {_project}")
+            logger.info("--> Collecting metrics for %s", _project)
             project_report = self.ReportedProject(_project)
             project_report.dependencies = dt.get_project_dependencies(_project)
 
@@ -252,7 +252,7 @@ class DependencyTrack:
             "X-Api-key": self._api_key
         }
 
-        logger.info(f"Using DependencyTrack from {self._url}")
+        logger.info("Using DependencyTrack from %s", self._url)
 
     def _get_paged(self, url) -> list[dict]:
         objects = []
@@ -282,7 +282,7 @@ class DependencyTrack:
         return [Project(p) for p in self._get_paged(f"{self._url}/project")]
 
     def delete_project(self, _project) -> bool:
-        logger.info(f"Deleting project {_project}")
+        logger.info("Deleting project %s", _project)
         resp = requests.delete(
             f"{self._url}/project/{_project['uuid']}",
             headers=self._shared_header,
@@ -291,7 +291,7 @@ class DependencyTrack:
         return resp.ok
 
     def get_projects_with_tag(self, _release_tag) -> list[Project]:
-        logger.info(f"Getting list of projects with tag {_release_tag}")
+        logger.info("Getting list of projects with tag %s", _release_tag)
 
         return [
             Project(p)
@@ -303,7 +303,7 @@ class DependencyTrack:
         ]
 
     def get_project_dependencies(self, _project) -> list[Component]:
-        logger.info(f"Getting list of project dependencies for {_project}")
+        logger.info("Getting list of project dependencies for %s", _project)
         return [Component(d) for d in self._get_paged(f"{self._url}/component/project/{_project.uuid}")]
 
 
