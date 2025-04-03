@@ -54,11 +54,11 @@ class CleanGitFlowShortLivingBranches(BaseAction):
                 logging.info(f"Skipping '{project}' as it does not match project name filter")
                 continue
 
-            if any([slb.fullmatch(project.version) for slb in self.LONG_LIVING_BRANCHES]):
+            if any(slb.fullmatch(project.version) for slb in self.LONG_LIVING_BRANCHES):
                 logging.info(f"Skipping '{project}' as it is on a long-living branch ")
                 continue
 
-            if any([slb.fullmatch(project.version) for slb in self.SHORT_LIVING_BRANCHES]):
+            if any(slb.fullmatch(project.version) for slb in self.SHORT_LIVING_BRANCHES):
                 if not dependency_track.delete_project(project):
                     logging.warning(f"Unable to delete {project}")
                 continue
