@@ -270,7 +270,7 @@ class DependencyTrack:
         return objects
 
     def get_projects(self) -> list[Project]:
-        logging.info(f"Getting list of projects")
+        logging.info("Getting list of projects")
         return [Project(p) for p in self._get_paged(f"{self._url}/project")]
 
     def delete_project(self, _project) -> bool:
