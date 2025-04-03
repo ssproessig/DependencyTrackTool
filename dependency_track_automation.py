@@ -8,6 +8,9 @@ import requests
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
+TIMEOUT = 30.0
+
+
 ########################################################################################################################
 
 
@@ -253,8 +256,10 @@ class DependencyTrack:
 
         for page in itertools.count(1):
             response = requests.get(
-                url, headers=self._shared_header,
-                params={"pageSize": self.PAGE_SIZE, "pageNumber": page}
+                url,
+                headers=self._shared_header,
+                params={"pageSize": self.PAGE_SIZE, "pageNumber": page},
+                timeout=TIMEOUT,
             )
 
             if response.status_code > 299:
@@ -275,14 +280,24 @@ class DependencyTrack:
 
     def delete_project(self, _project) -> bool:
         logging.info(f"Deleting project {_project}")
-        resp = requests.delete(f"{self._url}/project/{_project['uuid']}", headers=self._shared_header)
+        resp = requests.delete(
+            f"{self._url}/project/{_project['uuid']}",
+            headers=self._shared_header,
+            timeout=TIMEOUT,
+        )
         return resp.ok
 
     def get_projects_with_tag(self, _release_tag) -> list[Project]:
         logging.info(f"Getting list of projects with tag {_release_tag}")
 
-        return [Project(p) for p in
-                requests.get(f"{self._url}/project/tag/{_release_tag}", headers=self._shared_header).json()]
+        return [
+            Project(p)
+            for p in requests.get(
+                f"{self._url}/project/tag/{_release_tag}",
+                headers=self._shared_header,
+                timeout=TIMEOUT,
+            ).json()
+        ]
 
     def get_project_dependencies(self, _project) -> list[Component]:
         logging.info(f"Getting list of project dependencies for {_project}")
