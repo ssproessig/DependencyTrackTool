@@ -17,7 +17,7 @@ TIMEOUT = 30.0
 
 
 class BaseAction:
-    def execute(self, dependency_track):
+    def execute(self, _dependency_track):
         logger.warning("not implemented")
 
 
@@ -110,7 +110,7 @@ class CreateVulnerabilityReport(BaseAction):
                     sheet.write(row_idx, col_idx, value)
                     column_value_max_length[col_idx] = max(column_value_max_length.get(col_idx, 0), len(str(value)))
 
-                for col_idx in range(0, len(column_value_max_length)):
+                for col_idx in range(len(column_value_max_length)):
                     sheet.set_column(col_idx, col_idx, column_value_max_length[col_idx] * self.COLUMN_WIDTH_SCALING)
 
                 if _row_callback:
@@ -189,7 +189,7 @@ class CreateVulnerabilityReport(BaseAction):
         self._release_tag = args.tag
         self._writer = args.writer
 
-    def execute(self, dependency_track):
+    def execute(self, _dependency_track):
         report = self.Report(self._release_tag)
 
         tagged_projects = dt.get_projects_with_tag(self._release_tag)
