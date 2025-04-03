@@ -6,7 +6,7 @@ from datetime import UTC
 
 import requests
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -27,13 +27,13 @@ class CleanGitFlowShortLivingBranches(BaseAction):
         "^master$",
         "develop",
         # maven release artifacts
-        "\\d+\\.\\d+\\.\\d+"
+        "\\d+\\.\\d+\\.\\d+",
     ]
     SHORT_LIVING_BRANCHES = [
         # git-flow
         "^PR-\\d+$",
         # maven snapshot artifacts
-        "\\d+\\.\\d+\\.\\d+-SNAPSHOT$"
+        "\\d+\\.\\d+\\.\\d+-SNAPSHOT$",
     ]
 
     def __init__(self, _arguments):
@@ -65,8 +65,10 @@ class CleanGitFlowShortLivingBranches(BaseAction):
                     logger.warning("Unable to delete %s", project)
                 continue
 
-            logger.info("Skipping '%s' as it is neither a LONG- nor SHORT-living branch version - "
-                        "and I don't know what to do", project)
+            logger.info(
+                "Skipping '%s' as it is neither a LONG- nor SHORT-living branch version - and I don't know what to do",
+                project,
+            )
 
 
 # inspired by code by David Nascimento
@@ -77,14 +79,13 @@ class CreateVulnerabilityReport(BaseAction):
         def __init__(self, _report):
             import xlsxwriter
 
-            filename = \
-                f"Vulnerability-Report_{_report.release_tag}-{_report.created_at.strftime('%d%m%Y_%H%M%S')}.xlsx"
+            filename = f"Vulnerability-Report_{_report.release_tag}-{_report.created_at.strftime('%d%m%Y_%H%M%S')}.xlsx"
             logger.info("writing to %s...", filename)
 
             xlsx = xlsxwriter.Workbook(filename)
             xlsx.formats[0].set_font_name("Consolas")
             xlsx.formats[0].set_font_size("9")
-            self._heading = xlsx.add_format({'bold': True})
+            self._heading = xlsx.add_format({"bold": True})
             self._write_summary(xlsx, _report)
             xlsx.close()
 
@@ -92,7 +93,7 @@ class CreateVulnerabilityReport(BaseAction):
 
         def _escape_name(self, in_name):
             out_name = in_name
-            for c in ["[","]",":","*","?","/","\\"]:
+            for c in ["[", "]", ":", "*", "?", "/", "\\"]:
                 out_name = out_name.replace(c, "_")
             return out_name
 
@@ -120,52 +121,66 @@ class CreateVulnerabilityReport(BaseAction):
 
         def _write_summary(self, _xlsx, _report):
             summary_sheet_fields = {
-                'name': 'Project Name',
-                'version': 'Version',
-                'vulnerabilities': 'Vulnerabilities',
-                'vulnerableComponents': 'Vulnerable Components',
-                'components': 'Components',
-                'inheritedRiskScore': 'Risk Score'
+                "name": "Project Name",
+                "version": "Version",
+                "vulnerabilities": "Vulnerabilities",
+                "vulnerableComponents": "Vulnerable Components",
+                "components": "Components",
+                "inheritedRiskScore": "Risk Score",
             }
 
             summary_sheet = self._write_sheet(
-                _xlsx, "Summary", summary_sheet_fields, _report.projects,
-                lambda project: self._write_project_sheet(_xlsx, project)
+                _xlsx,
+                "Summary",
+                summary_sheet_fields,
+                _report.projects,
+                lambda project: self._write_project_sheet(_xlsx, project),
             )
 
             summary_sheet.conditional_format(
-                0, len(summary_sheet_fields) - 1, 10000, len(summary_sheet_fields) - 1,
-                {'type': 'icon_set',
-                 'icon_style': '3_traffic_lights',
-                 'reverse_icons': True,
-                 'icons': [{'criteria': '>=', 'type': 'number', 'value': 10},
-                           {'criteria': '>', 'type': 'number', 'value': 0},
-                           {'criteria': '<=', 'type': 'number', 'value': 0}]}
+                0,
+                len(summary_sheet_fields) - 1,
+                10000,
+                len(summary_sheet_fields) - 1,
+                {
+                    "type": "icon_set",
+                    "icon_style": "3_traffic_lights",
+                    "reverse_icons": True,
+                    "icons": [
+                        {"criteria": ">=", "type": "number", "value": 10},
+                        {"criteria": ">", "type": "number", "value": 0},
+                        {"criteria": "<=", "type": "number", "value": 0},
+                    ],
+                },
             )
 
         def _write_project_sheet(self, _xlsx, _project):
-            self._write_sheet(_xlsx, f"{_project.name} {_project.version}"[:31], {
-                'name': 'Name',
-                'version': 'Version',
-                'license': 'Under License',
-                'purl': 'PURL',
-                'sha256': 'Checksum'
-            }, _project.dependencies)
+            self._write_sheet(
+                _xlsx,
+                f"{_project.name} {_project.version}"[:31],
+                {
+                    "name": "Name",
+                    "version": "Version",
+                    "license": "Under License",
+                    "purl": "PURL",
+                    "sha256": "Checksum",
+                },
+                _project.dependencies,
+            )
 
-    SUPPORTED_WRITERS = {
-        "xlsx": XlsxWriter
-    }
+    SUPPORTED_WRITERS = {"xlsx": XlsxWriter}
 
     class Report:
         def __init__(self, _release_tag):
             from datetime import datetime
+
             self.created_at = datetime.now(tz=UTC)
             self.release_tag = _release_tag
             self.projects = []
 
     class ReportedProject:
-        REPORT_FIELDS = ['name', 'version']
-        METRIC_FIELDS = ['vulnerabilities', 'vulnerableComponents', 'components', 'inheritedRiskScore']
+        REPORT_FIELDS = ["name", "version"]
+        METRIC_FIELDS = ["vulnerabilities", "vulnerableComponents", "components", "inheritedRiskScore"]
 
         def __init__(self, _project):
             [self.__setattr__(name, _project[name]) for name in self.REPORT_FIELDS]
@@ -178,8 +193,11 @@ class CreateVulnerabilityReport(BaseAction):
     def __init__(self, _arguments):
         parser = argparse.ArgumentParser()
         parser.add_argument("--tag", help="the tag to filter projects for reporting")
-        parser.add_argument("--writer", default='xlsx',
-                            help=f"the writer to use for reporting: {self.SUPPORTED_WRITERS.keys()}")
+        parser.add_argument(
+            "--writer",
+            default="xlsx",
+            help=f"the writer to use for reporting: {self.SUPPORTED_WRITERS.keys()}",
+        )
         args = parser.parse_args(_arguments)
 
         if args.writer not in self.SUPPORTED_WRITERS:
@@ -207,7 +225,7 @@ class CreateVulnerabilityReport(BaseAction):
 
 _ACTIONS = {
     "clean-gitflow-short-living-branch-versions": CleanGitFlowShortLivingBranches,
-    "create-vulnerability-report": CreateVulnerabilityReport
+    "create-vulnerability-report": CreateVulnerabilityReport,
 }
 
 
@@ -216,8 +234,8 @@ _ACTIONS = {
 
 class Project(dict):
     def __init__(self, *args, **kwargs):
-        args[0].setdefault('version', None)
-        args[0].setdefault('uuid', None)
+        args[0].setdefault("version", None)
+        args[0].setdefault("uuid", None)
         super().__init__(*args, **kwargs)
         self.__dict__ = self
 
@@ -241,6 +259,7 @@ class InvalidResponseError(Exception):
     def __str__(self):
         return f"{self._response.status_code} for {self._response.url}: {self._response.text}"
 
+
 class DependencyTrack:
     PAGE_SIZE = 100
 
@@ -249,7 +268,7 @@ class DependencyTrack:
         self._url = f"{_url}/api/v1"
         self._shared_header = {
             "Content-Type": "application/json",
-            "X-Api-key": self._api_key
+            "X-Api-key": self._api_key,
         }
 
         logger.info("Using DependencyTrack from %s", self._url)
@@ -312,10 +331,10 @@ class DependencyTrack:
 
 if __name__ == "__main__":
     app_parser = argparse.ArgumentParser(description="DependencyTrack tools")
-    app_parser.add_argument('--url', required=True, help="Dependency Track URL to use")
-    app_parser.add_argument('--api-key', required=True, help="Dependency Track API key to use")
-    app_parser.add_argument('action', help=f"Action to execute: {' '.join(_ACTIONS.keys())}")
-    app_parser.add_argument('remaining_arguments', nargs=argparse.REMAINDER)
+    app_parser.add_argument("--url", required=True, help="Dependency Track URL to use")
+    app_parser.add_argument("--api-key", required=True, help="Dependency Track API key to use")
+    app_parser.add_argument("action", help=f"Action to execute: {' '.join(_ACTIONS.keys())}")
+    app_parser.add_argument("remaining_arguments", nargs=argparse.REMAINDER)
 
     arguments = app_parser.parse_args()
 
