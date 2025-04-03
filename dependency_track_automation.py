@@ -3,6 +3,8 @@ import itertools
 import logging
 import re
 from datetime import UTC
+from re import Pattern
+from typing import ClassVar
 
 import requests
 
@@ -22,24 +24,27 @@ class BaseAction:
 
 
 class CleanGitFlowShortLivingBranches(BaseAction):
-    LONG_LIVING_BRANCHES = [
-        # git-flow
-        "^master$",
-        "develop",
-        # maven release artifacts
-        "\\d+\\.\\d+\\.\\d+",
+    LONG_LIVING_BRANCHES: ClassVar[list[Pattern]] = [
+        re.compile(p)
+        for p in [
+            # git-flow
+            "^master$",
+            "develop",
+            # maven release artifacts
+            "\\d+\\.\\d+\\.\\d+",
+        ]
     ]
-    SHORT_LIVING_BRANCHES = [
-        # git-flow
-        "^PR-\\d+$",
-        # maven snapshot artifacts
-        "\\d+\\.\\d+\\.\\d+-SNAPSHOT$",
+    SHORT_LIVING_BRANCHES: ClassVar[list[Pattern]] = [
+        re.compile(p)
+        for p in [
+            # git-flow
+            "^PR-\\d+$",
+            # maven snapshot artifacts
+            "\\d+\\.\\d+\\.\\d+-SNAPSHOT$",
+        ]
     ]
 
     def __init__(self, _arguments):
-        self.LONG_LIVING_BRANCHES = [re.compile(slb) for slb in self.LONG_LIVING_BRANCHES]
-        self.SHORT_LIVING_BRANCHES = [re.compile(slb) for slb in self.SHORT_LIVING_BRANCHES]
-
         parser = argparse.ArgumentParser()
         parser.add_argument("--filter-project-name", help="project name must match (default: any name)", default=".*")
         args = parser.parse_args(_arguments)
@@ -168,7 +173,7 @@ class CreateVulnerabilityReport(BaseAction):
                 _project.dependencies,
             )
 
-    SUPPORTED_WRITERS = {"xlsx": XlsxWriter}
+    SUPPORTED_WRITERS: ClassVar[dict[str, object]] = {"xlsx": XlsxWriter}
 
     class Report:
         def __init__(self, _release_tag):
@@ -179,8 +184,10 @@ class CreateVulnerabilityReport(BaseAction):
             self.projects = []
 
     class ReportedProject:
-        REPORT_FIELDS = ["name", "version"]
-        METRIC_FIELDS = ["vulnerabilities", "vulnerableComponents", "components", "inheritedRiskScore"]
+        REPORT_FIELDS: ClassVar[list[str]] = ["name", "version"]
+        METRIC_FIELDS: ClassVar[list[str]] = [
+            "vulnerabilities", "vulnerableComponents", "components", "inheritedRiskScore",
+        ]
 
         def __init__(self, _project):
             [self.__setattr__(name, _project[name]) for name in self.REPORT_FIELDS]
