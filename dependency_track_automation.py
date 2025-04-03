@@ -287,7 +287,7 @@ class DependencyTrack:
 
     def get_project_dependencies(self, _project) -> List[Component]:
         logging.info(f"Getting list of project dependencies for {_project}")
-        return [Component(d['component']) for d in self._get_paged(f"{self._url}/dependency/project/{_project.uuid}")]
+        return [Component(d) for d in self._get_paged(f"{self._url}/component/project/{_project.uuid}")]
 
 
 ########################################################################################################################
