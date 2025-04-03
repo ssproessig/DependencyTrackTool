@@ -2,6 +2,7 @@ import argparse
 import itertools
 import logging
 import re
+from datetime import UTC
 
 import requests
 
@@ -157,7 +158,7 @@ class CreateVulnerabilityReport(BaseAction):
     class Report:
         def __init__(self, _release_tag):
             from datetime import datetime
-            self.created_at = datetime.now()
+            self.created_at = datetime.now(tz=UTC)
             self.release_tag = _release_tag
             self.projects = []
 
